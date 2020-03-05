@@ -15,7 +15,10 @@ from torch.utils.data import Dataset
 from PIL import Image
 from torchvision import transforms
 
-def give_dataloaders(source_path, arch = 'inceptionV3', bs = 80, nb_kernels = 8,samples_per_class = 4):
+# enable for Windows
+# from multiprocessing import freeze_support
+
+def give_dataloaders(source_path, arch = 'resnet18', bs = 80, nb_kernels = 8,samples_per_class = 4):
     """
     Args:
         dataset:     string, name of dataset for which the dataloaders should be returned.
@@ -37,7 +40,8 @@ def give_dataloaders(source_path, arch = 'inceptionV3', bs = 80, nb_kernels = 8,
 
     return dataloaders
 
-def give_OnlineProducts_datasets(source_path,arch = 'inceptionV3',samples_per_class = 4):
+
+def give_OnlineProducts_datasets(source_path,arch = 'resnet18',samples_per_class = 4):
     """
     This function generates a training, testing and evaluation dataloader for Metric Learning on the Online-Products dataset.
     For Metric Learning, training and test sets are provided by given text-files, Ebay_train.txt & Ebay_test.txt.
@@ -97,13 +101,14 @@ def give_OnlineProducts_datasets(source_path,arch = 'inceptionV3',samples_per_cl
     # return {'training':train_dataset, 'testing':val_dataset, 'evaluation':eval_dataset}
     return {'training':train_dataset, 'testing':val_dataset, 'evaluation':eval_dataset, 'super_evaluation':super_train_dataset}
 
+
 class BaseTripletDataset(Dataset):
     """
     Dataset class to provide (augmented) correctly prepared training samples corresponding to standard DML literature.
     This includes normalizing to ImageNet-standards, and Random & Resized cropping of shapes 224 for ResNet50 and 227 for
     GoogLeNet during Training. During validation, only resizing to 256 or center cropping to 224/227 is performed.
     """
-    def __init__(self, image_dict, arch = 'inceptionV3', samples_per_class=8, is_validation=False):
+    def __init__(self, image_dict, arch = 'resnet18', samples_per_class=8, is_validation=False):
         """
         Dataset Init-Function.
         Args:
@@ -139,11 +144,11 @@ class BaseTripletDataset(Dataset):
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
         transf_list = []
         if not self.is_validation:
-            transf_list.extend([transforms.RandomResizedCrop(size=224) if arch=='resnet50' else transforms.RandomResizedCrop(size=299),
+            transf_list.extend([transforms.RandomResizedCrop(size=224) if arch=='resnet50' else transforms.RandomResizedCrop(size=224),
                                 transforms.RandomHorizontalFlip(0.5)])
         else:
             transf_list.extend([transforms.Resize(256),
-                                transforms.CenterCrop(224) if arch=='resnet50' else transforms.CenterCrop(299)])
+                                transforms.CenterCrop(224) if arch=='resnet50' else transforms.CenterCrop(224)])
 
         transf_list.extend([transforms.ToTensor(), normalize])
         self.transform = transforms.Compose(transf_list)
@@ -209,20 +214,12 @@ class BaseTripletDataset(Dataset):
 
 
 
-
-# source_path = 'Stanford_Online_Products'
-
-# dataloaders = give_dataloaders(source_path)
-
-# trainloader = iter(dataloaders['training'])
-
-# def main():
-#     for i,(class_labels,image) in enumerate(trainloader,0):
-#         print('i:',i,'labels:',class_labels)
-
 # if __name__ == '__main__':
-#     main()
+#     freeze_support() # enable for multiprocessing in Windows
+#     source_path = 'Stanford_Online_Products'
+#     dataloaders = give_dataloaders(source_path)
+#     trainloader = iter(dataloaders['training'])
 
-
-
+#     for i,(class_labels,_) in enumerate(trainloader,0):
+#         print('i:',i,'labels:',class_labels)
 
