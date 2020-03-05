@@ -214,7 +214,7 @@ class BaseTripletDataset(Dataset):
 
 
 
-<<<<<<< HEAD
+
 
 source_path = '../../Stanford_Online_Products'
 
@@ -229,14 +229,12 @@ def main():
 if __name__ == '__main__':
      main()
 
-
-=======
 # if __name__ == '__main__':
 #     freeze_support() # enable for multiprocessing in Windows
 #     source_path = 'Stanford_Online_Products'
 #     dataloaders = give_dataloaders(source_path)
 #     trainloader = iter(dataloaders['training'])
->>>>>>> 44e21d82fa145da740ccede9c45859b591f042ae
+
 
 #     for i,(class_labels,_) in enumerate(trainloader,0):
 #         print('i:',i,'labels:',class_labels)

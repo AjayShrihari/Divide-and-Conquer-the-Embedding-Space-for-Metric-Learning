@@ -79,7 +79,7 @@ def loss(model, loss = 'Triplet', lr = 0.0001):
     """
     if (loss == 'Triplet')
         loss = TripletLoss(model)
-#        criterion = 
+         
         optimizer = optim.Adam(model.parameters(), lr = lr)
         
     
