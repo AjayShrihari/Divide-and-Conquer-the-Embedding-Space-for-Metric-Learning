@@ -16,15 +16,18 @@ from torch.nn.init import xavier_normal
 from torch import optim
 from loss import TripletLoss
 
-def inception_model():
+def resnet_model(num_classes = 12):
 #    num_classes = 16
     """
     Builds pretrained Inception v3 model, removes the last output layer, and freezes training of parameters
     """
-    inception_model = torchvision.models.inception_v3(pretrained = True, progress = True)
-    feat = inception_model.fc.in_features
+    
+    resnet_model = torchvision.models.resnet18(pretrained = True, progress = True)
+    feat = resnet_model.fc.in_features
 #    inception_model.classifier = nn.Sequential(*list(model.classifier.children())[:-3])
-    inception_model.classifier=inception_model.classifier[:-1]
+#    resnet_model.classifier=resnet_model.classifier[:-1]
+    resnet_model.fc = nn.Linear(feat, num_classes)
+    input_size = 224
      for param in model.parameters():
         param.requires_grad = False
     return inception_model 
@@ -34,11 +37,11 @@ def model():
     Trains batch-wise based on L2 norm
     """
 #     model = pretrain_inception()
-    model = inception_model()
+    model = resnet_model()
     
     num_classes = 12
     num_embedding = 128
-    feat = inception_model.fc.in_features
+    feat = resnet_model.fc.in_features
     model.classifier[47] = nn.Sequential(
             nn.Linear(feat, 512),
             nn.ELU(),
