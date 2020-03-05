@@ -15,6 +15,7 @@ from torch.nn import Linear, Dropout, AvgPool2d, MaxPool2d
 from torch.nn.init import xavier_normal
 from torch import optim
 from loss import TripletLoss
+
 def inception_model():
 #    num_classes = 16
     """
@@ -32,8 +33,9 @@ def model():
     Builds the last layer as a combination two layers and an ELU activation. T 
     Trains batch-wise based on L2 norm
     """
-    model = pretrain_inception()
-   
+#     model = pretrain_inception()
+    model = inception_model()
+    
     num_classes = 12
     num_embedding = 128
     feat = inception_model.fc.in_features
@@ -78,7 +80,7 @@ def loss(model, loss = 'Triplet', lr = 0.0001):
         optimizer = optim.Adam(model.parameters(), lr = lr)
         
     
-    return loss, oprimizer
+    return loss, optimizer
 
     
     
