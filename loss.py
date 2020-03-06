@@ -9,7 +9,7 @@ import numpy as np
 import torch, itertools as it,random
 import torch.nn as nn
 
-def randomsampling(self, batch, labels):
+def randomsampling(batch, labels):
     """
     This methods finds all available triplets in a batch given by the classes provided in labels, and randomly
     selects <len(batch)> triplets.
@@ -44,8 +44,13 @@ class TripletLoss(nn.Module):
         super(TripletLoss, self).__init__()
         self.margin = margin
 
-    def forward(self, anchor, positive, negative, size_average=True):
+    def distance(self, anchor, positive, negative, size_average=True):
         distance_positive = (anchor - positive).pow(2).sum(1)  # .pow(.5)
         distance_negative = (anchor - negative).pow(2).sum(1)  # .pow(.5)
-        losses = nn.relu(distance_positive - distance_negative + self.margin)
-        return losses.mean() if size_average else losses.sum()
+        return nn.relu(distance_positive - distance_negative + self.margin)
+    
+    def forward(self,batch,labels):
+        triplets = randomsampling(batch, labels)
+        loss =  torch.stack([self.distance(batch[triplet[0],:],batch[triplet[1],:],batch[triplet[2],:]) for triplet in triplets])
+        
+        return torch.mean(loss)
