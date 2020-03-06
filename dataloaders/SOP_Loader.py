@@ -18,7 +18,7 @@ from torchvision import transforms
 # enable for Windows
 # from multiprocessing import freeze_support
 
-def give_dataloaders(source_path, arch = 'resnet18', bs = 80, nb_kernels = 8,samples_per_class = 4):
+def give_dataloaders(source_path, arch = 'resnet18', bs = 5, nb_kernels = 8,samples_per_class = 4):
     """
     Args:
         dataset:     string, name of dataset for which the dataloaders should be returned.

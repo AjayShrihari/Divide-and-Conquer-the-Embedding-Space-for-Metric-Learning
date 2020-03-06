@@ -8,6 +8,7 @@ Created on Thu Mar  5 03:18:25 2020
 import numpy as np
 import torch, itertools as it,random
 import torch.nn as nn
+import torch.nn.functional as func
 
 def randomsampling(batch, labels):
     """
@@ -45,12 +46,16 @@ class TripletLoss(nn.Module):
         self.margin = margin
 
     def distance(self, anchor, positive, negative, size_average=True):
-        distance_positive = (anchor - positive).pow(2).sum(1)  # .pow(.5)
-        distance_negative = (anchor - negative).pow(2).sum(1)  # .pow(.5)
-        return nn.relu(distance_positive - distance_negative + self.margin)
+#        print (anchor.shape)
+#        print (positive.shape)
+        distance_positive = (anchor - positive).pow(2).sum()  # .pow(.5)
+        distance_negative = (anchor - negative).pow(2).sum()  # .pow(.5)
+        return func.relu(distance_positive - distance_negative + self.margin)
     
     def forward(self,batch,labels):
+#        print (batch.shape)
         triplets = randomsampling(batch, labels)
+#        print (triplets)
         loss =  torch.stack([self.distance(batch[triplet[0],:],batch[triplet[1],:],batch[triplet[2],:]) for triplet in triplets])
         
-        return torch.mean(loss)t
+        return torch.mean(loss)

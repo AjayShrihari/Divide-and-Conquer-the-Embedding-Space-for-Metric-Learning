@@ -2,6 +2,6 @@
 Computer Vision project
 
 - [ ] Model script
-- [*] Data Loader script
+- [ ] Data Loader script
 - [ ] Loss script
 - [ ] Training and testing scripts

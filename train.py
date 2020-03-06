@@ -22,7 +22,7 @@ from sklearn.cluster import KMeans
 from scipy.spatial.distance import squareform, pdist
 
 
-#sys.path.insert(1, 'dataloaders/')
+sys.path.insert(1, 'dataloaders/')
 
 import SOP_Loader as loader
 import loss as tripletloss
@@ -69,7 +69,7 @@ def train_one_epoch(train_dataloader,model,optimizer,criterion,epoch):
         optimizer.step()
         
         losses.append(loss.item())
-        
+        print ("Loss for epoch:",loss.item())
         if i==len(train_dataloader)-1: 
             print('Epoch (Train) {0}: Mean Loss [{1:.4f}]'.format(epoch, np.mean(losses)))
 
@@ -113,7 +113,7 @@ def eval_one_epoch(test_dataloader,model,k_vals,epoch):
     return NMI,recall_all_k,feature_coll
 
 for epoch in range(num_epochs):
-    
+    print ("Epoch:",epoch)
     model.train()
     train_one_epoch(dataloaders['training'],model,optimizer,criterion,epoch)
     
