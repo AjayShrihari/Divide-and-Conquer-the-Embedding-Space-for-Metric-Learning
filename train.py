@@ -35,7 +35,7 @@ decay = 0.0004
 tau = [30,35]
 gamma = 0.3
 
-k_vals = 100
+k_vals = [1,10,100,1000]
 num_epochs = 20
 margin = 0.2
 
@@ -43,7 +43,7 @@ margin = 0.2
 source_path = '../Stanford_Online_Products'
 dataloaders = loader.give_dataloaders(source_path)
 
-model = net.ResNet18()
+model = net.ResNet18().to(device)
 
 to_optim   = [{'params':model.parameters(),'lr':lr,'weight_decay':decay}]
 optimizer    = torch.optim.Adam(to_optim)
@@ -69,9 +69,11 @@ def train_one_epoch(train_dataloader,model,optimizer,criterion,epoch):
         optimizer.step()
         
         losses.append(loss.item())
-        print ("Loss for epoch:",loss.item())
-        if i==len(train_dataloader)-1: 
+        # print ("Loss for epoch:",loss.item())
+        # if i==len(train_dataloader)-1:
+        if i==301-1: 
             print('Epoch (Train) {0}: Mean Loss [{1:.4f}]'.format(epoch, np.mean(losses)))
+            break
 
 def eval_one_epoch(test_dataloader,model,k_vals,epoch):
     
@@ -87,6 +89,7 @@ def eval_one_epoch(test_dataloader,model,k_vals,epoch):
             target_labels.extend(target.numpy().tolist())
             out = model(input_img.to(device))
             feature_coll.extend(out.cpu().detach().numpy().tolist())
+            if(idx==150): break
 
         target_labels = np.hstack(target_labels).reshape(-1,1)
         feature_coll  = np.vstack(feature_coll).astype('float32')
@@ -113,7 +116,7 @@ def eval_one_epoch(test_dataloader,model,k_vals,epoch):
     return NMI,recall_all_k,feature_coll
 
 for epoch in range(num_epochs):
-    print ("Epoch:",epoch)
+    # print ("Epoch:",epoch)
     model.train()
     train_one_epoch(dataloaders['training'],model,optimizer,criterion,epoch)
     
