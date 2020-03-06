@@ -216,18 +216,18 @@ class BaseTripletDataset(Dataset):
 
 
 
-source_path = '../../Stanford_Online_Products'
+#source_path = '../../Stanford_Online_Products'
+#
+#dataloaders = give_dataloaders(source_path)
 
-dataloaders = give_dataloaders(source_path)
-
-trainloader = iter(dataloaders['training'])
-
-def main():
-     for i,(class_labels,image) in enumerate(trainloader,0):
-         print('i:',i,'labels:',class_labels)
-
-if __name__ == '__main__':
-     main()
+#trainloader = iter(dataloaders['training'])
+#
+#def main():
+#     for i,(class_labels,image) in enumerate(trainloader,0):
+#         print('i:',i,'labels:',class_labels)
+#
+#if __name__ == '__main__':
+#     main()
 
 # if __name__ == '__main__':
 #     freeze_support() # enable for multiprocessing in Windows

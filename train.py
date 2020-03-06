@@ -21,6 +21,9 @@ from sklearn import metrics
 from sklearn.cluster import KMeans
 from scipy.spatial.distance import squareform, pdist
 
+
+#sys.path.insert(1, 'dataloaders/')
+
 import SOP_Loader as loader
 import loss as tripletloss
 import model as net
@@ -36,10 +39,11 @@ k_vals = 100
 num_epochs = 20
 margin = 0.2
 
-source_path = 'Stanford_Online_Products'
+#source_path = '~/Academics/ECE3rdyear/3-2/CV/Project/Stanford_Online_Products'
+source_path = '../Stanford_Online_Products'
 dataloaders = loader.give_dataloaders(source_path)
 
-model = net.model()
+model = net.ResNet18()
 
 to_optim   = [{'params':model.parameters(),'lr':lr,'weight_decay':decay}]
 optimizer    = torch.optim.Adam(to_optim)

@@ -53,4 +53,4 @@ class TripletLoss(nn.Module):
         triplets = randomsampling(batch, labels)
         loss =  torch.stack([self.distance(batch[triplet[0],:],batch[triplet[1],:],batch[triplet[2],:]) for triplet in triplets])
         
-        return torch.mean(loss)
+        return torch.mean(loss)t
