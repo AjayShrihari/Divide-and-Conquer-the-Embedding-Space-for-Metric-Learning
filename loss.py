@@ -8,7 +8,7 @@ Created on Thu Mar  5 03:18:25 2020
 import numpy as np
 import torch, itertools as it,random
 import torch.nn as nn
-import torch.nn.functional as func
+import torch.nn.functional as F
 
 def randomsampling(batch, labels):
     """
@@ -34,7 +34,67 @@ def randomsampling(batch, labels):
     #NOTE: The number of possible triplets is given by #unique_classes*(2*(samples_per_class-1)!)*(#unique_classes-1)*samples_per_class
     sampled_triplets = random.sample(sampled_triplets, batch.shape[0])
     return sampled_triplets
+
+def pdist(A, eps = 1e-4):
+    """
+    Efficient function to compute the distance matrix for a matrix A.
+    Args:
+        A:   Matrix/Tensor for which the distance matrix is to be computed.
+        eps: float, minimal distance/clampling value to ensure no zero values.
+    Returns:
+        distance_matrix, clamped to ensure no zero values are passed.
+    """
+    prod = torch.mm(A, A.t())
+    norm = prod.diag().unsqueeze(1).expand_as(prod)
+    res = (norm + norm.t() - 2 * prod).clamp(min = 0)
+    return res.clamp(min = eps).sqrt()
     
+def semihardsampling(batch, labels):
+    """
+    This methods finds all available triplets in a batch given by the classes provided in labels, and select
+    triplets based on semihard sampling introduced in 'Deep Metric Learning via Lifted Structured Feature Embedding'.
+    Args:
+    batch:  np.ndarray or torch.Tensor, batch-wise embedded training samples.
+    labels: np.ndarray or torch.Tensor, ground truth labels corresponding to batch.
+    Returns:
+    list of sampled data tuples containing reference indices to the position IN THE BATCH.
+    """
+    if isinstance(labels, torch.Tensor): labels = labels.detach().numpy()
+    bs = batch.size(0)
+    #Return distance matrix for all elements in batch (BSxBS)
+    distances = pdist(batch.detach()).detach().cpu().numpy()
+    
+    positives, negatives = [], []
+    anchors = []
+    
+    for i in range(bs):
+        
+        l, d = labels[i], distances[i]
+        # print(d,l)
+        anchors.append(i)
+        #1 for batchelements with label l
+        neg = labels!=l; pos = labels==l
+        #0 for current anchor
+        pos[i] = False
+        
+        #Find negatives that violate triplet constraint semi-negatives
+        neg_mask = np.logical_and(neg,d<d[np.where(pos)[0]].max())
+        #Find positives that violate triplet constraint semi-hardly
+        pos_mask = np.logical_and(pos,d>d[np.where(neg)[0]].min())
+        
+        if pos_mask.sum()>0:
+            positives.append(np.random.choice(np.where(pos_mask)[0]))
+        else:
+            positives.append(np.random.choice(np.where(pos)[0]))
+        
+        if neg_mask.sum()>0:
+            negatives.append(np.random.choice(np.where(neg_mask)[0]))
+        else:
+            negatives.append(np.random.choice(np.where(neg)[0]))
+    
+    sampled_triplets = [[a, p, n] for a, p, n in zip(anchors, positives, negatives)]
+    return sampled_triplets
+          
 class TripletLoss(nn.Module):
     """
     Triplet loss
@@ -46,16 +106,13 @@ class TripletLoss(nn.Module):
         self.margin = margin
 
     def distance(self, anchor, positive, negative, size_average=True):
-#        print (anchor.shape)
-#        print (positive.shape)
         distance_positive = (anchor - positive).pow(2).sum()  # .pow(.5)
         distance_negative = (anchor - negative).pow(2).sum()  # .pow(.5)
-        return func.relu(distance_positive - distance_negative + self.margin)
+        return F.relu(distance_positive - distance_negative + self.margin)
     
-    def forward(self,batch,labels):
-#        print (batch.shape)
-        triplets = randomsampling(batch, labels)
-#        print (triplets)
+    def forward(self,batch,labels,sampling_type = 1):
+        if(sampling_type==0): triplets = randomsampling(batch, labels)
+        else: triplets = semihardsampling(batch,labels)
         loss =  torch.stack([self.distance(batch[triplet[0],:],batch[triplet[1],:],batch[triplet[2],:]) for triplet in triplets])
         
         return torch.mean(loss)
