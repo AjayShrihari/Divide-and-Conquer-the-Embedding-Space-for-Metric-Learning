@@ -43,7 +43,7 @@ margin = 0.2
 source_path = '../Stanford_Online_Products'
 dataloaders = loader.give_dataloaders(source_path)
 
-model = net.ResNet18().to(device)
+model = net.ResNet50().to(device)
 
 to_optim   = [{'params':model.parameters(),'lr':lr,'weight_decay':decay}]
 optimizer    = torch.optim.Adam(to_optim)
