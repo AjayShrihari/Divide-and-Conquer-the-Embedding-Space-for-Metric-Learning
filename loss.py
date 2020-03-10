@@ -56,14 +56,14 @@ def semihardsampling(batch, labels):
         l, d = labels[i], distances[i]
         # print(d,l)
         anchors.append(i)
-        #1 for batchelements with label l
+        
         neg = labels!=l; pos = labels==l
-        #0 for current anchor
+        
         pos[i] = False
         
-        #Find negatives that violate triplet constraint semi-negatives
+        
         neg_mask = np.logical_and(neg,d<d[np.where(pos)[0]].max())
-        #Find positives that violate triplet constraint semi-hardly
+        
         pos_mask = np.logical_and(pos,d>d[np.where(neg)[0]].min())
         
         if pos_mask.sum()>0:
