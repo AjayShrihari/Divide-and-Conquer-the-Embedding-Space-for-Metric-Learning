@@ -18,7 +18,7 @@ from loss import TripletLoss
 import pretrainedmodels as ptm
 import pretrainedmodels.utils as utils
 
-class ResNet18(nn.Module):
+class ResNet50(nn.Module):
     """
     Container for ResNet50 s.t. it can be used for metric learning.
     The Network has been broken down to allow for higher modularity, if one wishes
@@ -33,11 +33,11 @@ class ResNet18(nn.Module):
 
         if not self.not_pretrained:
             print('Getting pretrained weights...')
-            self.model = ptm.__dict__['resnet18'](num_classes=1000, pretrained='imagenet')
+            self.model = ptm.__dict__['resnet50'](num_classes=1000, pretrained='imagenet')
             print('Done.')
         else:
             print('Not utilizing pretrained weights!')
-            self.model = ptm.__dict__['resnet18'](num_classes=1000, pretrained=None)
+            self.model = ptm.__dict__['resnet50'](num_classes=1000, pretrained=None)
 
         for module in filter(lambda m: type(m) == nn.BatchNorm2d, self.model.modules()):
             module.eval()
@@ -61,7 +61,7 @@ class ResNet18(nn.Module):
         return mod_x if self.loss_type=='npair' else torch.nn.functional.normalize(mod_x, dim=-1)
     
     
-#model = ResNet18()
+#model = ResNet50()
 #model.train()    
     
     
