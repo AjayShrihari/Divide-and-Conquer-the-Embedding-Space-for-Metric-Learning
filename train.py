@@ -149,4 +149,5 @@ for epoch in range(num_epochs):
     NMI,_,_ = eval_one_epoch(dataloaders['testing'],model,k_vals,epoch)
     
     scheduler.step()
-    
+
+torch.save(model.state_dict(), './model_dict_shnm1.pth')
