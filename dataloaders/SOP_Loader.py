@@ -18,7 +18,7 @@ from torchvision import transforms
 # enable for Windows
 # from multiprocessing import freeze_support
 
-def give_dataloaders(source_path, arch = 'resnet18', bs = 5, nb_kernels = 0,samples_per_class = 4):
+def give_dataloaders(source_path, arch = 'resnet50', bs = 80, nb_kernels = 0,samples_per_class = 4):
     """
     Args:
         dataset:     string, name of dataset for which the dataloaders should be returned.
@@ -41,7 +41,7 @@ def give_dataloaders(source_path, arch = 'resnet18', bs = 5, nb_kernels = 0,samp
     return dataloaders
 
 
-def give_OnlineProducts_datasets(source_path,arch = 'resnet18',samples_per_class = 4):
+def give_OnlineProducts_datasets(source_path,arch = 'resnet50',samples_per_class = 4):
     """
     This function generates a training, testing and evaluation dataloader for Metric Learning on the Online-Products dataset.
     For Metric Learning, training and test sets are provided by given text-files, Ebay_train.txt & Ebay_test.txt.
@@ -108,7 +108,7 @@ class BaseTripletDataset(Dataset):
     This includes normalizing to ImageNet-standards, and Random & Resized cropping of shapes 224 for ResNet50 and 227 for
     GoogLeNet during Training. During validation, only resizing to 256 or center cropping to 224/227 is performed.
     """
-    def __init__(self, image_dict, arch = 'resnet18', samples_per_class=8, is_validation=False):
+    def __init__(self, image_dict, arch = 'resnet50', samples_per_class=8, is_validation=False):
         """
         Dataset Init-Function.
         Args:
