@@ -12,13 +12,7 @@ import torch.nn.functional as F
 
 def randomsampling(batch, labels):
     """
-    This methods finds all available triplets in a batch given by the classes provided in labels, and randomly
-    selects <len(batch)> triplets.
-    Args:
-        batch:  np.ndarray or torch.Tensor, batch-wise embedded training samples.
-        labels: np.ndarray or torch.Tensor, ground truth labels corresponding to batch.
-    Returns:
-        list of sampled data tuples containing reference indices to the position IN THE BATCH.
+    Find triplets within a sampling of the batch
     """
     if isinstance(labels, torch.Tensor): labels = labels.detach().numpy()
     unique_classes = np.unique(labels)
@@ -37,12 +31,7 @@ def randomsampling(batch, labels):
 
 def pdist(A, eps = 1e-4):
     """
-    Efficient function to compute the distance matrix for a matrix A.
-    Args:
-        A:   Matrix/Tensor for which the distance matrix is to be computed.
-        eps: float, minimal distance/clampling value to ensure no zero values.
-    Returns:
-        distance_matrix, clamped to ensure no zero values are passed.
+    Find the distance matrix for a given matrix
     """
     prod = torch.mm(A, A.t())
     norm = prod.diag().unsqueeze(1).expand_as(prod)
@@ -51,13 +40,8 @@ def pdist(A, eps = 1e-4):
     
 def semihardsampling(batch, labels):
     """
-    This methods finds all available triplets in a batch given by the classes provided in labels, and select
-    triplets based on semihard sampling introduced in 'Deep Metric Learning via Lifted Structured Feature Embedding'.
-    Args:
-    batch:  np.ndarray or torch.Tensor, batch-wise embedded training samples.
-    labels: np.ndarray or torch.Tensor, ground truth labels corresponding to batch.
-    Returns:
-    list of sampled data tuples containing reference indices to the position IN THE BATCH.
+    Find triplets within a sampling using semi hard negative mining 
+    
     """
     if isinstance(labels, torch.Tensor): labels = labels.detach().numpy()
     bs = batch.size(0)
@@ -97,8 +81,7 @@ def semihardsampling(batch, labels):
           
 class TripletLoss(nn.Module):
     """
-    Triplet loss
-    Takes embeddings of an anchor sample, a positive sample and a negative sample
+    Function to calculate triplet loss. Finds embeddings using a set of positive, negative and anchor points 
     """
 
     def __init__(self, margin):

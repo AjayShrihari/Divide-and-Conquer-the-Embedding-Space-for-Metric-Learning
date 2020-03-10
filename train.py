@@ -52,6 +52,7 @@ scheduler    = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=tau, g
 criterion = tripletloss.TripletLoss(margin)
 
 def train_one_epoch(train_dataloader,model,optimizer,criterion,epoch):
+    '''Training for one epoch '''
     
     losses = []
     iterator = iter(train_dataloader)
@@ -76,6 +77,7 @@ def train_one_epoch(train_dataloader,model,optimizer,criterion,epoch):
             break
 
 def eval_one_epoch(test_dataloader,model,k_vals,epoch):
+    '''Evaluating for one epoch'''
     
     torch.cuda.empty_cache()
     test_dataloader = dataloaders['testing']
@@ -141,6 +143,7 @@ def eval_one_epoch(test_dataloader,model,k_vals,epoch):
     return NMI,recall_all_k,feature_coll
 
 for epoch in range(num_epochs):
+    '''Run the training and per epoch testing for a certain number of epochs''' 
     # print ("Epoch:",epoch)
     model.train()
     train_one_epoch(dataloaders['training'],model,optimizer,criterion,epoch)
@@ -149,5 +152,5 @@ for epoch in range(num_epochs):
     NMI,_,_ = eval_one_epoch(dataloaders['testing'],model,k_vals,epoch)
     
     scheduler.step()
-
+#save model
 torch.save(model.state_dict(), './model_dict_shnm1.pth')

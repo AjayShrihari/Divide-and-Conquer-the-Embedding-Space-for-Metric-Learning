@@ -19,13 +19,12 @@ import pretrainedmodels as ptm
 import pretrainedmodels.utils as utils
 
 class ResNet50(nn.Module):
+    
     """
-    Container for ResNet50 s.t. it can be used for metric learning.
-    The Network has been broken down to allow for higher modularity, if one wishes
-    to target specific layers/blocks directly.
+    Class for pretrained ResNet50 to create the embeddings. Can access last few layers through representation 
     """
     def __init__(self, embed_dim=128, loss = 'triplet', not_pretrained = False,list_style=False, no_norm=False):
-        super(ResNet18, self).__init__()
+        super(ResNet50, self).__init__()
 
         self.embed_dim = embed_dim
         self.loss_type = loss
@@ -60,7 +59,7 @@ class ResNet50(nn.Module):
         #No Normalization is used if N-Pair Loss is the target criterion.
         return mod_x if self.loss_type=='npair' else torch.nn.functional.normalize(mod_x, dim=-1)
     
-    
+# Separate model    
 #model = ResNet50()
 #model.train()    
     
