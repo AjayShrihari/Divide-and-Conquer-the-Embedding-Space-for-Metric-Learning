@@ -26,7 +26,8 @@ parser.add_argument('--dataset_path', default = '../Stanford_Online_Products', h
 parser.add_argument('--arch', default = 'resnet50', help = 'model architecture used')
 parser.add_argument('--pretrained', type = bool, default = True, help = 'Require pretrained model')
 
-parser.add_argument('--nb_workers', type = int, default = 0, help = 'Number of workers for dataloader')
+# number of workers for data loader
+parser.add_argument('--nb_workers', type = int, default = 4, help = 'Number of workers for dataloader')
 parser.add_argument('--samples_per_class', type = int, default = 4, help = 'Number of samples drawn per class while building dataloader')
 
 parser.add_argument('--lr', type = float, default = 0.00001, help = 'learning rate')
@@ -35,6 +36,7 @@ parser.add_argument('--tau', default = '30,35', help = 'milstones for multistepL
 parser.add_argument('--gamma', type = float, default = 0.3, help = 'gamma for multistepLR')
 
 parser.add_argument('--initial_epochs', type = int, default = 5, help = 'train full learner for initial_epochs')
+# number of initial epochs
 parser.add_argument('--num_epochs', type = int, default = 20, help = 'number of epochs')
 parser.add_argument('--num_epochs_cluster', type = int, default =1, help = 'number of epochs per cluster')
 parser.add_argument('--num_T', type = int, default = 5, help = 'each cluster is trained num_T times before joining back learners')
