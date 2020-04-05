@@ -8,6 +8,8 @@ import argparse
 
 import torch, torch.nn as nn
 
+sys.path.insert(1, 'dataloaders/')
+
 import SOP_Loader as loader
 import model as net
 import train as train
