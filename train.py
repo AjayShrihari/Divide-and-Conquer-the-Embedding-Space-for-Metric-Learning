@@ -187,8 +187,6 @@ def train(args,model,dataloaders,k_vals):
     print('Epoch {0} : Clustering data',args.initial_epochs - 1)
     train_clusters = utils.load_clusters(args,dataloaders['training'],model)
     print('Epoch {0} : Done clustering',args.initial_epochs - 1)
-    if(args.debug):
-        return
     
     for epoch in range(args.initial_epochs,args.num_epochs):
         
