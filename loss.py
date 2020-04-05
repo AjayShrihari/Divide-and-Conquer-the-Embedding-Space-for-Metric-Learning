@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Mar  5 03:18:25 2020
+Created on Fri Mar  6 06:19:36 2020
 
-@author: ajay
+@author: aniket
 """
+
 import numpy as np
 import torch, itertools as it,random
 import torch.nn as nn
@@ -12,7 +12,13 @@ import torch.nn.functional as F
 
 def randomsampling(batch, labels):
     """
-    Find triplets within a sampling of the batch
+    This methods finds all available triplets in a batch given by the classes provided in labels, and randomly
+    selects <len(batch)> triplets.
+    Args:
+        batch:  np.ndarray or torch.Tensor, batch-wise embedded training samples.
+        labels: np.ndarray or torch.Tensor, ground truth labels corresponding to batch.
+    Returns:
+        list of sampled data tuples containing reference indices to the position IN THE BATCH.
     """
     if isinstance(labels, torch.Tensor): labels = labels.detach().numpy()
     unique_classes = np.unique(labels)
@@ -31,7 +37,12 @@ def randomsampling(batch, labels):
 
 def pdist(A, eps = 1e-4):
     """
-    Find the distance matrix for a given matrix
+    Efficient function to compute the distance matrix for a matrix A.
+    Args:
+        A:   Matrix/Tensor for which the distance matrix is to be computed.
+        eps: float, minimal distance/clampling value to ensure no zero values.
+    Returns:
+        distance_matrix, clamped to ensure no zero values are passed.
     """
     prod = torch.mm(A, A.t())
     norm = prod.diag().unsqueeze(1).expand_as(prod)
@@ -40,8 +51,13 @@ def pdist(A, eps = 1e-4):
     
 def semihardsampling(batch, labels):
     """
-    Find triplets within a sampling using semi hard negative mining 
-    
+    This methods finds all available triplets in a batch given by the classes provided in labels, and select
+    triplets based on semihard sampling introduced in 'Deep Metric Learning via Lifted Structured Feature Embedding'.
+    Args:
+    batch:  np.ndarray or torch.Tensor, batch-wise embedded training samples.
+    labels: np.ndarray or torch.Tensor, ground truth labels corresponding to batch.
+    Returns:
+    list of sampled data tuples containing reference indices to the position IN THE BATCH.
     """
     if isinstance(labels, torch.Tensor): labels = labels.detach().numpy()
     bs = batch.size(0)
@@ -56,14 +72,14 @@ def semihardsampling(batch, labels):
         l, d = labels[i], distances[i]
         # print(d,l)
         anchors.append(i)
-        
+        #1 for batchelements with label l
         neg = labels!=l; pos = labels==l
-        
+        #0 for current anchor
         pos[i] = False
         
-        
+        #Find negatives that violate triplet constraint semi-negatives
         neg_mask = np.logical_and(neg,d<d[np.where(pos)[0]].max())
-        
+        #Find positives that violate triplet constraint semi-hardly
         pos_mask = np.logical_and(pos,d>d[np.where(neg)[0]].min())
         
         if pos_mask.sum()>0:
@@ -81,21 +97,23 @@ def semihardsampling(batch, labels):
           
 class TripletLoss(nn.Module):
     """
-    Function to calculate triplet loss. Finds embeddings using a set of positive, negative and anchor points 
+    Triplet loss
+    Takes embeddings of an anchor sample, a positive sample and a negative sample
     """
 
-    def __init__(self, margin):
+    def __init__(self, args):
         super(TripletLoss, self).__init__()
-        self.margin = margin
+        self.margin = args.triplet_margin
+        self.sampling_type = args.sampling_type
 
     def distance(self, anchor, positive, negative, size_average=True):
         distance_positive = (anchor - positive).pow(2).sum()  # .pow(.5)
         distance_negative = (anchor - negative).pow(2).sum()  # .pow(.5)
         return F.relu(distance_positive - distance_negative + self.margin)
     
-    def forward(self,batch,labels,sampling_type = 1):
-        if(sampling_type==0): triplets = randomsampling(batch, labels)
-        else: triplets = semihardsampling(batch,labels)
+    def forward(self,batch,labels):
+        if(self.sampling_type=='semihard'): triplets = semihardsampling(batch, labels)
+        else: triplets = randomsampling(batch,labels)
         loss =  torch.stack([self.distance(batch[triplet[0],:],batch[triplet[1],:],batch[triplet[2],:]) for triplet in triplets])
         
         return torch.mean(loss)
