@@ -188,17 +188,17 @@ def train(args,model,dataloaders,k_vals):
     for epoch in range(args.initial_epochs,args.num_epochs):
         
         if(epoch % args.num_T == 0):
-            print('Epoch {0} : Clustering data',epoch)
+            print('Epoch {0} : Clustering data'.format(epoch))
             train_clusters = utils.load_clusters(args,dataloaders['training'],model)
-            print('Epoch {0} : Done Clustering', epoch)
+            print('Epoch {0} : Done Clustering'.format(epoch))
         
-        for j in range(args.num_learner):
+        for j in range(args.num_learners):
             
             _ = model.train()
-            train_one_epoch(train_clusters[j],model,optimizer,criterion,epoch,embed_num = j)
+            train_one_epoch(args,train_clusters[j],model,optimizer,criterion,epoch,embed_num = j)
         
             _ = model.eval()
-            NMI,_,_ = eval_one_epoch(dataloaders['testing'],model,k_vals,epoch,embed_num = -1)
+            NMI,_,_ = eval_one_epoch(args,dataloaders['testing'],model,k_vals,epoch,embed_num = -1)
                 
             scheduler.step()
     

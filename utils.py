@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 """
 Created on Sat Apr  4 01:17:30 2020
 
@@ -61,11 +61,11 @@ class cluster_saved_data(Dataset):
     def __len__(self):
         return len(self.labels)
     
-    def __getitem(self,idx):
+    def __getitem__(self,idx):
         im = np.load('./clusters/cluster_' + str(self.clus_id) + '/im_' + str(idx+1) + '.npy')
-        trans = transforms.Compose([transforms.ToTensor()])
-        im = trans(im)
-        label = self.labels(idx)
+        #trans = transforms.Compose([transforms.ToTensor()])
+        im = torch.from_numpy(im).float()
+        label = self.labels[idx]
         return label,im
 
 def load_clusters(args,dloader,model):
@@ -123,7 +123,7 @@ def load_clusters(args,dloader,model):
                 faiss_search_index = faiss.IndexFlatL2(d)
             
             faiss_search_index.add(computed_centroids)
-            _, model_generated_cluster_labels = faiss_search_index.search(feature_coll, 1) 
+            _, pred_labels = faiss_search_index.search(feature_coll, 1) 
         else:
             kmeans = KMeans(n_clusters = num_clusters, random_state=0).fit(feature_coll)
             pred_labels = kmeans.labels_
@@ -134,21 +134,22 @@ def load_clusters(args,dloader,model):
             os.mkdir('./clusters')
             for i in range(num_clusters):
                 os.mkdir('./clusters/cluster_' + str(i))
-        
-        for idx,inp in enumerate(iterator):
+        iterator1=iter(dloader)
+        for idx,inp in enumerate(iterator1):
             sz = inp[0].numpy().shape[0]
             for i in range(sz):
-                clus_id = pred_labels[i + idx*sz]
+                clus_id = pred_labels[i + idx*sz][0]
+         
                 if(save):
                     num_elements_in_cluster[clus_id] += 1
-                    np.save('./clusters/cluster_'+ str(clus_id) + '/im_' + str(num_elements_in_cluster[clus_id]) + '.npy', inp[1][i])
+                    np.save('./clusters/cluster_'+ str(clus_id) + '/im_' + str(num_elements_in_cluster[clus_id]) + '.npy', inp[1][i].numpy().astype("float16"))
                 else:
                     cluster_im[clus_id].append((inp[1][i]))
                 
                 cluster_labels[clus_id].append((inp[0][i]))
             if(args.debug):
                 if(idx==99): break
-        
+        print("num_elemnets_in_cluster:",num_elements_in_cluster)
         for i in range(num_clusters):
             if(save):
                 data = cluster_saved_data(clus_id = i, labels = cluster_labels[i])
