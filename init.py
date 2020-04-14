@@ -35,11 +35,11 @@ parser.add_argument('--decay', type = float, default = 0.0004, help = 'decay rat
 parser.add_argument('--tau', default = '30,35', help = 'milstones for multistepLR')
 parser.add_argument('--gamma', type = float, default = 0.3, help = 'gamma for multistepLR')
 
-parser.add_argument('--initial_epochs', type = int, default =1, help = 'train full learner for initial_epochs')
+parser.add_argument('--initial_epochs', type = int, default =20, help = 'train full learner for initial_epochs')
 # number of initial epochs
-parser.add_argument('--num_epochs', type = int, default = 20, help = 'number of epochs')
+parser.add_argument('--num_epochs', type = int, default = 40, help = 'number of epochs')
 parser.add_argument('--num_epochs_cluster', type = int, default =1, help = 'number of epochs per cluster')
-parser.add_argument('--num_T', type = int, default = 1, help= 'each cluster is trained num_T times before joining back learners')
+parser.add_argument('--num_T', type = int, default = 20, help= 'each cluster is trained num_T times before joining back learners')
 
 parser.add_argument('--loss_type', default = 'tripletloss', help = 'loss function used')
 parser.add_argument('--triplet_margin', type = float, default = 0.2, help = 'margin value for triplet loss')
