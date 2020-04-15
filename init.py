@@ -27,8 +27,9 @@ parser.add_argument('--arch', default = 'resnet50', help = 'model architecture u
 parser.add_argument('--pretrained', type = bool, default = True, help = 'Require pretrained model')
 
 # number of workers for data loader
-parser.add_argument('--nb_workers', type = int, default = 4, help = 'Number of workers for dataloader')
+parser.add_argument('--nb_workers', type = int, default = 16, help = 'Number of workers for dataloader')
 parser.add_argument('--samples_per_class', type = int, default = 4, help = 'Number of samples drawn per class while building dataloader')
+parser.add_argument('--cluster_samples_per_class', type = int, default = 4, help = 'Number of samples of a cluster drawn per class while building dataloader')
 
 parser.add_argument('--lr', type = float, default = 0.00001, help = 'learning rate')
 parser.add_argument('--decay', type = float, default = 0.0004, help = 'decay rate for adam')
@@ -64,7 +65,7 @@ if(args.dataset_name == 'SOP'):
     k_vals = [1,10,100,1000]
 
 dataloaders = loader.give_dataloaders(args)
-print(len(dataloaders['training'].dataset))
+# print(len(dataloaders['training'].dataset))
 model = net.ResNet50(args)
 if(torch.cuda.device_count() > 1):
     model = nn.DataParallel(model)
