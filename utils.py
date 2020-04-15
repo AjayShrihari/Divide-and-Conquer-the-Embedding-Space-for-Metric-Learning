@@ -6,7 +6,7 @@ Created on Sat Apr  4 01:17:30 2020
 """
 import os
 import shutil
-import numpy as np
+import numpy as np,copy
 import torch
 from torchvision import transforms
 from torch.utils.data import Dataset,DataLoader
@@ -54,18 +54,49 @@ class cluster_data(Dataset):
     
 class cluster_saved_data(Dataset):
     
-    def __init__(self,clus_id,labels):
+    def __init__(self,clus_id,labels,samples_per_class = 4):
         self.clus_id = clus_id
         self.labels = labels
+        
+        self.avail_classes = np.unique(labels)
+        self.label_dict = {}
+        for i in self.avail_classes:
+            self.label_dict[i] = []
+        for i,lab in enumerate(self.labels):
+            self.label_dict[lab.item()].append(i+1)
+        
+        self.samples_per_class = samples_per_class
+        self.current_class   = np.random.choice(self.avail_classes)
+        self.classes_visited = [self.current_class, self.current_class]
+        self.n_samples_drawn = 0
+        
+        self.is_init = True
     
     def __len__(self):
         return len(self.labels)
     
     def __getitem__(self,idx):
-        im = np.load('./clusters/cluster_' + str(self.clus_id) + '/im_' + str(idx+1) + '.npy')
-        #trans = transforms.Compose([transforms.ToTensor()])
+        if self.is_init:
+            self.current_class = self.avail_classes[idx % len(self.avail_classes)]
+            self.is_init = False
+        
+        if self.n_samples_drawn == self.samples_per_class:
+
+                counter = copy.deepcopy(self.avail_classes).tolist()
+                for prev_class in self.classes_visited:
+                    if prev_class in counter: counter.remove(prev_class)
+
+                self.current_class   = counter[idx % len(counter)]
+                self.classes_visited = self.classes_visited[1:]+[self.current_class]
+                self.n_samples_drawn = 0
+
+        class_sample_idx = idx % len(self.label_dict[self.current_class])
+        self.n_samples_drawn += 1
+
+        im_idx = self.label_dict[self.current_class][class_sample_idx]
+        im = np.load('./clusters/cluster_' + str(self.clus_id) + '/im_' + str(im_idx) + '.npy')
         im = torch.from_numpy(im).float()
-        label = self.labels[idx]
+        label = self.current_class
         return label,im
 
 def load_clusters(args,dloader,model):
@@ -139,7 +170,7 @@ def load_clusters(args,dloader,model):
             sz = inp[0].numpy().shape[0]
             for i in range(sz):
                 clus_id = pred_labels[i + idx*sz][0]
-         
+                
                 if(save):
                     num_elements_in_cluster[clus_id] += 1
                     np.save('./clusters/cluster_'+ str(clus_id) + '/im_' + str(num_elements_in_cluster[clus_id]) + '.npy', inp[1][i].numpy().astype("float16"))
@@ -152,7 +183,7 @@ def load_clusters(args,dloader,model):
         print("num_elemnets_in_cluster:",num_elements_in_cluster)
         for i in range(num_clusters):
             if(save):
-                data = cluster_saved_data(clus_id = i, labels = cluster_labels[i])
+                data = cluster_saved_data(clus_id = i, labels = cluster_labels[i],samples_per_class = args.cluster_samples_per_class)
             else:
                 data = cluster_data(cluster_labels[i],cluster_im[i])
             cluster[i] = DataLoader(data,batch_size = batch_sz,shuffle = True,num_workers = num_workers)
