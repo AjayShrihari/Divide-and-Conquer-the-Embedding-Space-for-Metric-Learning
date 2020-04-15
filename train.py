@@ -43,7 +43,7 @@ def train_one_epoch(args,train_dataloader,model,optimizer,criterion,epoch,embed_
     for i,(class_labels,image) in enumerate(iterator):
         
         features = model(image.to(device),embed_num = embed_num)
-        loss = criterion(features,class_labels)
+        loss = criterion(features,class_labels,embed_num = embed_num)
         
         optimizer.zero_grad()
         
