@@ -34,7 +34,7 @@ def give_dataloaders(args):
     dataloaders = {}
     for key,dataset in datasets.items():
         is_val = dataset.is_validation
-        dataloaders[key] = torch.utils.data.DataLoader(dataset, batch_size=args.batch_sz, num_workers=args.nb_workers, shuffle=not is_val, pin_memory=True, drop_last=not is_val)
+        dataloaders[key] = torch.utils.data.DataLoader(dataset, batch_size=args.batch_sz, num_workers=args.nb_workers, shuffle=not is_val, pin_memory=False, drop_last=not is_val)
 
     return dataloaders
 

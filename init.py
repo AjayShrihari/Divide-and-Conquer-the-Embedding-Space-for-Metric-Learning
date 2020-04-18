@@ -2,7 +2,7 @@
 """
 Created on Sun Apr  5 15:25:07 2020
 
-@author: aniket
+
 """
 import argparse
 import sys
@@ -27,7 +27,7 @@ parser.add_argument('--arch', default = 'resnet50', help = 'model architecture u
 parser.add_argument('--pretrained', type = bool, default = True, help = 'Require pretrained model')
 
 # number of workers for data loader
-parser.add_argument('--nb_workers', type = int, default = 16, help = 'Number of workers for dataloader')
+parser.add_argument('--nb_workers', type = int, default = 8, help = 'Number of workers for dataloader')
 parser.add_argument('--samples_per_class', type = int, default = 4, help = 'Number of samples drawn per class while building dataloader')
 parser.add_argument('--cluster_samples_per_class', type = int, default = 4, help = 'Number of samples of a cluster drawn per class while building dataloader')
 
@@ -36,17 +36,17 @@ parser.add_argument('--decay', type = float, default = 0.0004, help = 'decay rat
 parser.add_argument('--tau', default = '30,35', help = 'milstones for multistepLR')
 parser.add_argument('--gamma', type = float, default = 0.3, help = 'gamma for multistepLR')
 
-parser.add_argument('--initial_epochs', type = int, default =20, help = 'train full learner for initial_epochs')
+parser.add_argument('--initial_epochs', type = int, default =10, help = 'train full learner for initial_epochs')
 # number of initial epochs
-parser.add_argument('--num_epochs', type = int, default = 40, help = 'number of epochs')
+parser.add_argument('--num_epochs', type = int, default =40 , help = 'number of epochs')
 parser.add_argument('--num_epochs_cluster', type = int, default =1, help = 'number of epochs per cluster')
-parser.add_argument('--num_T', type = int, default = 20, help= 'each cluster is trained num_T times before joining back learners')
+parser.add_argument('--num_T', type = int, default = 10, help= 'each cluster is trained num_T times before joining back learners')
 
 parser.add_argument('--loss_type', default = 'tripletloss', help = 'loss function used')
 parser.add_argument('--triplet_margin', type = float, default = 0.2, help = 'margin value for triplet loss')
 parser.add_argument('--sampling_type', default = 'semihard', help = 'type of sampling used')
 
-parser.add_argument('--num_learners', type = int, default = 8, help = 'number of learners embedding space is divided into')
+parser.add_argument('--num_learners', type = int, default = 4, help = 'number of learners embedding space is divided into')
 parser.add_argument('--embed_dim', type = int, default = 128, help = 'dimension of embedded space')
 
 parser.add_argument('--faiss_type', default = 'gpu', help = 'use cpu or gpu for faiss clustering')
@@ -56,7 +56,7 @@ parser.add_argument('--cluster_save', type = bool, default = True, help = 'use s
 parser.add_argument('--debug', type = bool, default = False, help = 'debug option')
 
 parser.add_argument('--save_model', type = bool, default = True, help = 'save model?')
-parser.add_argument('--model_dict_path', default = './model_dict.pth', help = 'file in which model parameters are saved')
+parser.add_argument('--model_dict_path', default = './model_dict_k_4.pth', help = 'file in which model parameters are saved')
 parser.add_argument('--load_model', type = bool, default = False, help = 'load model parameters?')
 args = parser.parse_args()
 

@@ -130,7 +130,7 @@ def load_clusters(args,dloader,model):
             
         target_labels = np.hstack(target_labels).reshape(-1,1)
         feature_coll  = np.vstack(feature_coll).astype('float32')
-        
+        print("[faiss started]")
         if(using_faiss):
             d = feature_coll.shape[-1]
             if(args.faiss_type == 'gpu'):
@@ -158,7 +158,7 @@ def load_clusters(args,dloader,model):
         else:
             kmeans = KMeans(n_clusters = num_clusters, random_state=0).fit(feature_coll)
             pred_labels = kmeans.labels_
-        
+        print("[faiss ended]")
         if(save):
             if(os.path.isdir('./clusters')):
                 shutil.rmtree('./clusters')
@@ -186,7 +186,7 @@ def load_clusters(args,dloader,model):
                 data = cluster_saved_data(clus_id = i, labels = cluster_labels[i],samples_per_class = args.cluster_samples_per_class)
             else:
                 data = cluster_data(cluster_labels[i],cluster_im[i])
-            cluster[i] = DataLoader(data,batch_size = batch_sz,shuffle = True,num_workers = num_workers)
+            cluster[i] = DataLoader(data,batch_size = batch_sz,shuffle = True,num_workers = num_workers,drop_last=True)
     
     dloader.shuffle = True
         
