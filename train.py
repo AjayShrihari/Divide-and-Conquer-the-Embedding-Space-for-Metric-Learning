@@ -43,7 +43,7 @@ def train_one_epoch(args,train_dataloader,model,optimizer,criterion,epoch,embed_
     for i,(class_labels,image) in enumerate(iterator):
         
         features = model(image.to(device),embed_num = embed_num)
-        loss = criterion(features,class_labels,embed_num = embed_num)
+        loss = criterion(args,features,class_labels,embed_num = embed_num)
         
         optimizer.zero_grad()
         
@@ -182,7 +182,11 @@ def train(args,model,dataloaders,k_vals):
     
     if(args.loss_type == 'tripletloss'):
         criterion = loss.TripletLoss(args)
-    
+    elif(args.loss_type == 'margin'):
+        criterion = loss.MarginLoss(args)
+    elif(args.loss_type == 'proxynca'):
+        criterion = loss.ProxyNCALoss(args)
+        
     train_embed_full(args,model, dataloaders, k_vals, optimizer, scheduler, criterion, num_epochs = args.initial_epochs)
     
     for epoch in range(args.initial_epochs,args.num_epochs):
