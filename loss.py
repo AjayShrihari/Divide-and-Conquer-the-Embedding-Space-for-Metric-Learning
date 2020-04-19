@@ -10,6 +10,8 @@ import torch, itertools as it,random
 import torch.nn as nn
 import torch.nn.functional as F
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 def randomsampling(batch, labels):
     """
     This methods finds all available triplets in a batch given by the classes provided in labels, and randomly
@@ -121,7 +123,7 @@ class TripletLoss(nn.Module):
         distance_negative = (anchor - negative).pow(2).sum()  # .pow(.5)
         return F.relu(distance_positive - distance_negative + self.margin)
     
-    def forward(self,batch,labels,embed_num=-1):
+    def forward(self, args, batch,labels,embed_num=-1):
         if(self.sampling_type=='semihard'): triplets = semihardsampling(batch, labels, embed_num=embed_num)
         else: triplets = randomsampling(batch,labels)
         if(triplets):
@@ -129,3 +131,117 @@ class TripletLoss(nn.Module):
         else:
             loss = batch*0
         return torch.mean(loss)
+
+class MarginLoss(torch.nn.Module):
+    def __init__(self, args, beta_constant=False):
+        """
+        Basic Margin Loss as proposed in 'Sampling Matters in Deep Embedding Learning'.
+        Args:
+            margin:          float, fixed triplet margin (see also TripletLoss).
+            nu:              float, regularisation weight for beta. Zero by default (in literature as well).
+            beta:            float, initial value for trainable class margins. Set to default literature value.
+            n_classes:       int, number of target class. Required because it dictates the number of trainable class margins.
+            beta_constant:   bool, set to True if betas should not be trained.
+            sampling_method: str, sampling method to use to generate training triplets.
+        Returns:
+            Nothing!
+        """
+        super(MarginLoss, self).__init__()
+        self.margin             = args.triplet_margin
+        self.n_classes          = args.num_classes
+        self.beta_constant     = beta_constant
+
+        self.beta_val = args.margin_beta
+        self.beta     = self.beta_val if beta_constant else torch.nn.Parameter(torch.ones(self.n_classes)*self.beta_val)
+
+        self.sampling_type            = args.sampling_type
+
+
+    def forward(self, args, batch, labels,embed_num=-1):
+        """
+        Args:
+            batch:   torch.Tensor() [(BS x embed_dim)], batch of embeddings
+            labels:  np.ndarray [(BS x 1)], for each element of the batch assigns a class [0,...,C-1]
+        Returns:
+            margin loss (torch.Tensor(), batch-averaged)
+        """
+        if isinstance(labels, torch.Tensor): labels = labels.detach().cpu().numpy()
+        if(self.sampling_type=='semihard'): triplets = semihardsampling(batch, labels, embed_num=embed_num)
+        else: triplets = randomsampling(batch,labels)
+
+        #Compute distances between anchor-positive and anchor-negative.
+        if(triplets):
+            d_ap, d_an = [],[]
+            for triplet in triplets:
+                train_triplet = {'Anchor': batch[triplet[0],:], 'Positive':batch[triplet[1],:], 'Negative':batch[triplet[2]]}
+    
+                pos_dist = ((train_triplet['Anchor']-train_triplet['Positive']).pow(2).sum()+1e-8).pow(1/2)
+                neg_dist = ((train_triplet['Anchor']-train_triplet['Negative']).pow(2).sum()+1e-8).pow(1/2)
+    
+                d_ap.append(pos_dist)
+                d_an.append(neg_dist)
+            d_ap, d_an = torch.stack(d_ap), torch.stack(d_an)
+    
+            #Group betas together by anchor class in sampled triplets (as each beta belongs to one class).
+            if self.beta_constant:
+                beta = self.beta
+            else:
+                beta = torch.stack([self.beta[labels[triplet[0]]] for triplet in triplets]).type(torch.cuda.FloatTensor)
+    
+            #Compute actual margin postive and margin negative loss
+            pos_loss = F.relu(d_ap-beta+self.margin)
+            neg_loss = F.relu(beta-d_an+self.margin)
+    
+            #Compute normalization constant
+            pair_count = torch.sum((pos_loss>0.)+(neg_loss>0.)).type(torch.cuda.FloatTensor)
+    
+            #Actual Margin Loss
+            loss = torch.sum(pos_loss+neg_loss) if pair_count==0. else torch.sum(pos_loss+neg_loss)/pair_count
+        else:
+            loss = torch.mean(batch*0)
+        #(Optional) Add regularization penalty on betas.
+        # if self.nu: loss = loss + beta_regularisation_loss.type(torch.cuda.FloatTensor)
+
+        return loss
+
+class ProxyNCALoss(torch.nn.Module):
+    def __init__(self, args):
+        """
+        Basic ProxyNCA Loss as proposed in 'No Fuss Distance Metric Learning using Proxies'.
+        Args:
+            num_proxies:     int, number of proxies to use to estimate data groups. Usually set to number of classes.
+            embedding_dim:   int, Required to generate initial proxies which are the same size as the actual data embeddings.
+        Returns:
+            Nothing!
+        """
+        super(ProxyNCALoss, self).__init__()
+        self.num_proxies   = args.num_classes
+        # self.embedding_dim = args.embed_dim
+        # self.PROXIES = torch.nn.Parameter(torch.randn(self.num_proxies, self.embedding_dim) / 8)
+        self.all_classes = torch.arange(self.num_proxies)
+
+
+    def forward(self, args, batch, labels,embed_num = -1):
+        """
+        Args:
+            batch:   torch.Tensor() [(BS x embed_dim)], batch of embeddings
+            labels:  np.ndarray [(BS x 1)], for each element of the batch assigns a class [0,...,C-1]
+        Returns:
+            proxynca loss (torch.Tensor(), batch-averaged)
+        """
+        self.embedding_dim = args.embed_dim if embed_num==-1 else args.embed_dim//args.num_learners
+        self.PROXIES = torch.nn.Parameter(torch.randn(self.num_proxies, self.embedding_dim) / 8)
+        #Normalize batch in case it is not normalized (which should never be the case for ProxyNCA, but still).
+        #Same for the PROXIES. Note that the multiplication by 3 seems arbitrary, but helps the actual training.
+        batch       = 3*torch.nn.functional.normalize(batch, dim=1)
+        PROXIES     = 3*torch.nn.functional.normalize(self.PROXIES, dim=1)
+        #Group required proxies
+        pos_proxies = torch.stack([PROXIES[pos_label:pos_label+1,:] for pos_label in labels])
+        neg_proxies = torch.stack([torch.cat([self.all_classes[:class_label],self.all_classes[class_label+1:]]) for class_label in labels])
+        neg_proxies = torch.stack([PROXIES[neg_labels,:] for neg_labels in neg_proxies])
+        #Compute Proxy-distances
+        dist_to_neg_proxies = torch.sum((batch[:,None,:]-neg_proxies.to(device)).pow(2),dim=-1)
+        dist_to_pos_proxies = torch.sum((batch[:,None,:]-pos_proxies.to(device)).pow(2),dim=-1)
+        #Compute final proxy-based NCA loss
+        negative_log_proxy_nca_loss = torch.mean(dist_to_pos_proxies[:,0] + torch.logsumexp(-dist_to_neg_proxies, dim=1))
+        return negative_log_proxy_nca_loss
