@@ -28,7 +28,7 @@ def give_dataloaders(args):
         dataloaders: dict of dataloaders for training, testing and evaluation on training.
     """
    
-    datasets = give_OnlineProducts_datasets(args.dataset_path,args.arch,args.samples_per_class)
+    datasets = give_OnlineProducts_datasets(args,args.dataset_path,args.arch,args.samples_per_class)
 
     #Move datasets to dataloaders.
     dataloaders = {}
@@ -39,7 +39,7 @@ def give_dataloaders(args):
     return dataloaders
 
 
-def give_OnlineProducts_datasets(source_path,arch = 'resnet50',samples_per_class = 4):
+def give_OnlineProducts_datasets(args,source_path,arch = 'resnet50',samples_per_class = 4):
     """
     This function generates a training, testing and evaluation dataloader for Metric Learning on the Online-Products dataset.
     For Metric Learning, training and test sets are provided by given text-files, Ebay_train.txt & Ebay_test.txt.
@@ -88,9 +88,9 @@ def give_OnlineProducts_datasets(source_path,arch = 'resnet50',samples_per_class
     super_train_dataset.conversion = super_conversion
 
     
-    train_dataset       = BaseTripletDataset(train_image_dict, arch, samples_per_class=samples_per_class)
-    val_dataset         = BaseTripletDataset(val_image_dict,   arch, is_validation=True)
-    eval_dataset        = BaseTripletDataset(train_image_dict, arch, is_validation=True)
+    train_dataset       = BaseTripletDataset(args,train_image_dict, arch, samples_per_class=samples_per_class)
+    val_dataset         = BaseTripletDataset(args,val_image_dict,   arch, is_validation=True)
+    eval_dataset        = BaseTripletDataset(args,train_image_dict, arch, is_validation=True)
 
     train_dataset.conversion       = conversion
     val_dataset.conversion         = conversion
@@ -106,7 +106,7 @@ class BaseTripletDataset(Dataset):
     This includes normalizing to ImageNet-standards, and Random & Resized cropping of shapes 224 for ResNet50 and 227 for
     GoogLeNet during Training. During validation, only resizing to 256 or center cropping to 224/227 is performed.
     """
-    def __init__(self, image_dict, arch = 'resnet50', samples_per_class=8, is_validation=False):
+    def __init__(self, args,image_dict, arch = 'resnet50', samples_per_class=8, is_validation=False):
         """
         Dataset Init-Function.
         Args:
@@ -118,6 +118,7 @@ class BaseTripletDataset(Dataset):
             Nothing!
         """
         #Define length of dataset
+        self.args = args
         self.n_files     = np.sum([len(image_dict[key]) for key in image_dict.keys()])
 
         self.is_validation = is_validation
@@ -205,8 +206,11 @@ class BaseTripletDataset(Dataset):
             out_img = self.transform(self.ensure_3dim(Image.open(self.image_dict[self.current_class][class_sample_idx])))
             return self.current_class,out_img
         else:
-            return self.image_list[idx][-1], self.transform(self.ensure_3dim(Image.open(self.image_list[idx][0])))
-
+            if(not self.args.query):
+                return self.image_list[idx][-1], self.transform(self.ensure_3dim(Image.open(self.image_list[idx][0])))
+            else:
+                return self.image_list[idx][-1], self.transform(self.ensure_3dim(Image.open(self.image_list[idx][0]))),self.image_list[idx][0]
+    
     def __len__(self):
         return self.n_files
 
