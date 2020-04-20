@@ -15,6 +15,7 @@ import CUB_200_Loader as CUB_200_Loader
 import CARS_196_Loader as CARS_196_Loader
 import model as net
 import train as train
+import query as query
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -60,6 +61,10 @@ parser.add_argument('--debug', type = bool, default = False, help = 'debug optio
 parser.add_argument('--save_model', type = bool, default = True, help = 'save model?')
 parser.add_argument('--model_dict_path', default = './model_dict_k_4.pth', help = 'file in which model parameters are saved')
 parser.add_argument('--load_model', type = bool, default = False, help = 'load model parameters?')
+
+parser.add_argument('--query', type = bool, default = False, help = 'query an image and find its nearest neaighbours')
+parser.add_argument('--num_query', type = int, default = 5, help = 'number of neighbours to return per query')
+parser.add_argument('--query_im_path', type = str, default = '', help = 'path to image for querying')
 args = parser.parse_args()
 
 
@@ -92,7 +97,9 @@ model.to(device)
 if(args.load_model):
     model.load_state(torch.load(args.model_dict_path))
 
-train.train(args,model,dataloaders,k_vals)
+if(not args.query):
+    train.train(args,model,dataloaders,k_vals)
+else: print(query.query(args,dataloaders['testing'],model))
 
 
 
