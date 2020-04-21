@@ -16,6 +16,7 @@ In an embedding space, we generally try to learn one distance metric and use tha
 The applications of this model are plenty in image retrieval, and in building recommendation systems due to increased accuracy in clustering.
 
 2. Method 
+![Method doe divide nand conquer](https://camo.githubusercontent.com/d37e8f3401e53b9fc809e359e834300a6b6092a8/68747470733a2f2f6173616e616b6f792e6769746875622e696f2f696d616765732f7465617365725f6376707231395f646d6c2e6a7067)
 - The embeddings for the training images are computed and then clustered into K-clusters (disjoint subsets).
 - The d-dimensional embedding spaces are then split into K subspaces of d/K dimensions each.
 - Next, for each of the subspaces, a separate loss is assigned and trained. Different weights are learned for different subspaces, and we get K different distance metrics for the disjoint learners.
