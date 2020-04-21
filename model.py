@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Mar  2 19:42:14 2020
-@author: ajay
+Code for model used for metric learning
 """
 import torch
 import torch.nn as nn
@@ -11,9 +11,7 @@ import pretrainedmodels as ptm
 
 class ResNet50(nn.Module):
     """
-    Container for ResNet50 s.t. it can be used for metric learning.
-    The Network has been broken down to allow for higher modularity, if one wishes
-    to target specific layers/blocks directly.
+    Class for pretrained Resnet 50, and dividing the embedding space and assigning the Resnet 50 learners to parts of the embedding space.
     """
     def __init__(self, args):
         super(ResNet50, self).__init__()

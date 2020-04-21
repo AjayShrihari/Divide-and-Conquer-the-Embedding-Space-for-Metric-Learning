@@ -2,7 +2,7 @@
 """
 Created on Sat Apr  4 01:17:30 2020
 
-@author: aniket
+Code to create, save, and load clusters created by the model.
 """
 import os
 import shutil
@@ -143,11 +143,11 @@ def load_clusters(args,dloader,model):
             kmeans.min_points_per_centroid = 1
             kmeans.max_points_per_centroid = 1000000000
     
-            ### Train Kmeans
+            
             kmeans.train(feature_coll,cluster_index)
             computed_centroids = faiss.vector_float_to_array(kmeans.centroids).reshape(num_clusters,d)
     
-            ### Assign feature points to clusters
+            
             if(args.faiss_type == 'gpu'):
                 faiss_search_index = create_GpuIndex(d = d)
             else:

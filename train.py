@@ -2,7 +2,7 @@
 """
 Created on Thu Mar  5 19:31:16 2020
 
-@author: aniket
+Script to train the model
 """
 import warnings
 warnings.filterwarnings("ignore")
@@ -22,7 +22,7 @@ import torch.nn as nn
 from sklearn import metrics
 from sklearn.cluster import KMeans
 from scipy.spatial.distance import squareform, pdist
-
+# Check if faiss installed, else use sklearn's clustering implementation
 try:
     import faiss
     using_faiss = True
@@ -37,7 +37,9 @@ import utils as utils
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def train_one_epoch(args,train_dataloader,model,optimizer,criterion,epoch,embed_num = -1):
-    
+    '''
+    Method to train the model for one epoch.
+    '''
     losses = []
     iterator = iter(train_dataloader)
     for i,(class_labels,image) in enumerate(iterator):
@@ -57,12 +59,14 @@ def train_one_epoch(args,train_dataloader,model,optimizer,criterion,epoch,embed_
                 print('Epoch (Train) {0} Learner {1}: Mean Loss [{2:.4f}]'.format(epoch, embed_num, np.mean(losses)))
         else:
             if i==49:
-                # print(loss.item())
+                
                 print('Epoch (Train) {0} Learner {1}: Mean Loss [{2:.4f}]'.format(epoch, embed_num, np.mean(losses)))
                 break
 
 def eval_one_epoch(args,test_dataloader,model,k_vals,epoch,embed_num = -1):
-    
+    '''
+    Method for evaluation of one epoch
+    '''
     torch.cuda.empty_cache()
     if(not args.debug):
         n_classes = len(test_dataloader.dataset.avail_classes)
@@ -98,11 +102,11 @@ def eval_one_epoch(args,test_dataloader,model,k_vals,epoch,embed_num = -1):
             kmeans.min_points_per_centroid = 1
             kmeans.max_points_per_centroid = 1000000000
     
-            ### Train Kmeans
+            
             kmeans.train(feature_coll,cluster_index)
             computed_centroids = faiss.vector_float_to_array(kmeans.centroids).reshape(n_classes,d)
     
-            ### Assign feature points to clusters
+            
             if(args.faiss_type == 'gpu'):
                 faiss_search_index = utils.create_GpuIndex(d = d)
             else:
@@ -111,10 +115,10 @@ def eval_one_epoch(args,test_dataloader,model,k_vals,epoch,embed_num = -1):
             faiss_search_index.add(computed_centroids)
             _, model_generated_cluster_labels = faiss_search_index.search(feature_coll, 1)
     
-            ### Compute NMI
+            
             NMI = metrics.cluster.normalized_mutual_info_score(model_generated_cluster_labels.reshape(-1), target_labels.reshape(-1))
     
-            ### Recover max(k_vals) nearest neighbours to use for recall computation
+            # check if faiss GPU or FAISS CPU is to be run to find L2 search index
             if(args.faiss_type == 'gpu'):
                 faiss_search_index = utils.create_GpuIndex(d = d)
             else:
@@ -127,7 +131,7 @@ def eval_one_epoch(args,test_dataloader,model,k_vals,epoch,embed_num = -1):
         else:
             kmeans = KMeans(n_clusters=n_classes, random_state=0).fit(feature_coll)
             model_generated_cluster_labels = kmeans.labels_
-            # computed_centroids = kmeans.cluster_centers_
+            
     
             NMI = metrics.cluster.normalized_mutual_info_score(model_generated_cluster_labels.reshape(-1), target_labels.reshape(-1))
             
@@ -146,7 +150,9 @@ def eval_one_epoch(args,test_dataloader,model,k_vals,epoch,embed_num = -1):
 
 
 def train_embed_full(args,model,dataloaders,k_vals,optimizer,scheduler,criterion,num_epochs):
-    
+    '''
+    Method to train the model on the entire embedding space
+    '''
     for epoch in range(num_epochs):
         
         _ = model.train()
@@ -160,7 +166,9 @@ def train_embed_full(args,model,dataloaders,k_vals,optimizer,scheduler,criterion
 
 
 def train_embed_k(args,model,train_loader,test_loader,k_vals,optimizer,scheduler,criterion,num_epochs,embed_num):
-    
+    '''
+    Method to train the model K divisions of the embedding space
+    '''
     for epoch in range(num_epochs):
         
         _ = model.train()
@@ -174,7 +182,9 @@ def train_embed_k(args,model,train_loader,test_loader,k_vals,optimizer,scheduler
         
 
 def train(args,model,dataloaders,k_vals):
-    
+    '''
+    Main method to train based on triplet loss, margin loss or proxy nca loss, and save the model is necessary 
+    '''
     to_optim   = [{'params':model.parameters(),'lr':args.lr,'weight_decay':args.decay}]
     optimizer    = torch.optim.Adam(to_optim)
     tau = list(map(int,args.tau.split(',')))

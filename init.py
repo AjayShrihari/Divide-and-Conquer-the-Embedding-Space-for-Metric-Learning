@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sun Apr  5 15:25:07 2020
-
+Code for argparser and running the code on different datasets, batch size, number of epochs, number of epochs per cluster, embedding size, and others can be assigned.
 
 """
 import argparse
@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--batch_sz', type = int, default = 80, help = 'batch size for complete dataset')
 parser.add_argument('--cluster_batch_sz', type = int, default = 40, help = 'batch size for each cluster')
-parser.add_argument('--dataset_name', default = 'SOP', help = 'name of dataset used')
+parser.add_argument('--dataset_name', default = 'CUB', help = 'name of dataset used')
 
 parser.add_argument('--arch', default = 'resnet50', help = 'model architecture used')
 parser.add_argument('--pretrained', type = bool, default = True, help = 'Require pretrained model')
@@ -32,7 +32,6 @@ parser.add_argument('--pretrained', type = bool, default = True, help = 'Require
 parser.add_argument('--nb_workers', type = int, default = 8, help = 'Number of workers for dataloader')
 parser.add_argument('--samples_per_class', type = int, default = 4, help = 'Number of samples drawn per class while building dataloader')
 parser.add_argument('--cluster_samples_per_class', type = int, default = 4, help = 'Number of samples of a cluster drawn per class while building dataloader')
-
 parser.add_argument('--lr', type = float, default = 0.00001, help = 'learning rate')
 parser.add_argument('--decay', type = float, default = 0.0004, help = 'decay rate for adam')
 parser.add_argument('--tau', default = '30,35', help = 'milstones for multistepLR')
@@ -59,12 +58,12 @@ parser.add_argument('--cluster_save', type = bool, default = True, help = 'use s
 parser.add_argument('--debug', type = bool, default = False, help = 'debug option')
 
 parser.add_argument('--save_model', type = bool, default = True, help = 'save model?')
-parser.add_argument('--model_dict_path', default = './model_dict_k_4.pth', help = 'file in which model parameters are saved')
-parser.add_argument('--load_model', type = bool, default = False, help = 'load model parameters?')
+parser.add_argument('--model_dict_path', default = './model_dict_k_4_margin_cub.pth', help = 'file in which model parameters are saved')
+parser.add_argument('--load_model', type = bool, default = True, help = 'load model parameters?')
 
-parser.add_argument('--query', type = bool, default = False, help = 'query an image and find its nearest neaighbours')
-parser.add_argument('--num_query', type = int, default = 5, help = 'number of neighbours to return per query')
-parser.add_argument('--query_im_path', type = str, default = '', help = 'path to image for querying')
+parser.add_argument('--query', type = bool, default = True, help = 'query an image and find its nearest neaighbours')
+parser.add_argument('--num_query', type = int, default = 20, help = 'number of neighbours to return per query')
+parser.add_argument('--query_im_path', type = str, default = '../CUB_200/images/075.Green_Jay/Green_Jay_0027_2934474095.jpg', help = 'path to image for querying')
 args = parser.parse_args()
 
 
@@ -87,7 +86,7 @@ elif(args.dataset_name == 'CARS'):
     args = parser.parse_args()
     dataloaders = CARS_196_Loader.give_CARS_dataloaders(args)
 
-dataloaders = loader.give_dataloaders(args)
+#dataloaders = loader.give_dataloaders(args)
 # print(len(dataloaders['training'].dataset))
 model = net.ResNet50(args)
 if(torch.cuda.device_count() > 1):
@@ -95,12 +94,9 @@ if(torch.cuda.device_count() > 1):
 model.to(device)
 
 if(args.load_model):
-    model.load_state(torch.load(args.model_dict_path))
+    model.load_state_dict(torch.load(args.model_dict_path))
 
 if(not args.query):
     train.train(args,model,dataloaders,k_vals)
-else: print(query.query(args,dataloaders['testing'],model))
-
-
-
+else: print(query.query(args,dataloaders['testing'],dataloaders['evaluation'],model))
 
